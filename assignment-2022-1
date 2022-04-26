@@ -1,0 +1,80 @@
+from sys import argv as av
+import math
+import hashlib
+
+def prba(K):
+    for i in K:
+        print(format(i,'08b'))
+
+def make_L(L,Ls,l):
+    bts=0
+    for i in Ls:
+        if bts>=l:
+            # print(i<<(bts-l),bts,l)
+            L[len(L)-1]|=i<<(bts-l)
+            bts-=l
+        else:
+            ctr=l
+            tmp=i
+            # print(len(L))
+            if len(L)>0:
+                L[len(L)-1]|=i>>(l-bts)
+                tmp=i&((1<<l-bts)-1)
+                # print("s",i,bts,(1<<l-bts)-1,tmp)
+                ctr=l-bts
+            bts=8
+            while True:
+                if bts>ctr:
+                    # print(tmp,bts,ctr,tmp<<(bts-ctr))
+                    L.append(tmp<<(bts-ctr))
+                    bts-=ctr
+                    ctr=0
+                    break
+                else:
+                    # print(tmp,ctr-bts)
+                    L.append(tmp>>(ctr-bts))
+                    ctr-=bts
+                    tmp&=(1<<ctr)-1
+    print("L")
+    prba(L)
+
+def make_U(U,Us):
+    for i in range(len(Us)):
+        pos=i+Us[i]
+        while pos>>3>=len(U):
+            # print(pos,len(U))
+            U.append(0)
+        # print(pos,pos&7,7-pos&7,1<<(7-pos&7))
+        U[pos>>3]|=1<<(7-pos&7)
+    print("U")
+    prba(U)
+
+def hash(L,U):
+    m = hashlib.sha256()
+    m.update(L)
+    m.update(U)
+    digest = m.hexdigest()
+    print(digest)
+
+with open(av[1],'r') as inp:
+    Ls=[]
+    Us=[]
+    for i in inp:
+        Ls.append(int(i))
+        Us.append(int(i))
+    l=int(math.log(Us[len(Us)-1]//len(Us),2))
+    print("l",l)
+    # prba(Us)
+    for i in range(len(Ls)):
+        # print((1<<l)-1,l,1<<l)
+        Ls[i]=Ls[i]&((1<<l)-1)
+        Us[i]=Us[i]>>l
+    # prba(Us)
+    
+    L=bytearray()
+    make_L(L,Ls,l)
+
+    U=bytearray()
+    make_U(U,Us)
+
+    hash(L,U)
